@@ -16,6 +16,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".TabbedActivityTest"
+            android:label="@string/title_activity_tabbed_test"
+            android:theme="@style/AppTheme">
+        </activity>
     </application>
 
 </manifest>

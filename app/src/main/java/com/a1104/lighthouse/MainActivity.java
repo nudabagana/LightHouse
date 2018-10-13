@@ -5,6 +5,8 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,14 +18,23 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.a1104.lighthouse.Fragments.CalendarScreenFragment;
+import com.a1104.lighthouse.Fragments.OnFragmentInteractionListener;
+import com.a1104.lighthouse.Fragments.TaskScreenFragment;
+import com.a1104.lighthouse.Fragments.WeatherScreenFragment;
 import com.a1104.lighthouse.db.TaskContract;
 import com.a1104.lighthouse.db.TaskDbHelper;
+import com.a1104.lighthouse.scroll.MyAdapter;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnFragmentInteractionListener {
 
     private static final String TAG = "MainActivity";
+
+    private MyAdapter myAdapter;
+    private ViewPager viewPager;
+
     private TaskDbHelper mHelper;
     private ListView mTaskListView;
     private ArrayAdapter<String> mAdapter;
@@ -31,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.task_screen_layout);
+        setContentView(R.layout.activity_main);
 
         mHelper = new TaskDbHelper(this);
         mTaskListView = (ListView) findViewById(R.id.list_todo);
@@ -47,6 +58,10 @@ public class MainActivity extends AppCompatActivity {
         cursor.close();
         db.close();
         updateUI();
+
+        myAdapter = new MyAdapter(getSupportFragmentManager());
+        viewPager = (ViewPager) findViewById(R.id.pagerContainer);
+        viewPager.setAdapter(myAdapter);
     }
 
     @Override
@@ -100,17 +115,17 @@ public class MainActivity extends AppCompatActivity {
             taskList.add(cursor.getString(idx));
         }
 
-        if (mAdapter == null) {
-            mAdapter = new ArrayAdapter<>(this,
-                    R.layout.item_todo,
-                    R.id.task_title,
-                    taskList);
-            mTaskListView.setAdapter(mAdapter);
-        } else {
-            mAdapter.clear();
-            mAdapter.addAll(taskList);
-            mAdapter.notifyDataSetChanged();
-        }
+//        if (mAdapter == null) {
+//            mAdapter = new ArrayAdapter<>(this,
+//                    R.layout.item_todo,
+//                    R.id.task_title,
+//                    taskList);
+//            mTaskListView.setAdapter(mAdapter);
+//        } else {
+//            mAdapter.clear();
+//            mAdapter.addAll(taskList);
+//            mAdapter.notifyDataSetChanged();
+//        }
 
         cursor.close();
         db.close();
@@ -126,5 +141,10 @@ public class MainActivity extends AppCompatActivity {
                 new String[]{task});
         db.close();
         updateUI();
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
     }
 }
