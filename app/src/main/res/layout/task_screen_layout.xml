@@ -8,6 +8,7 @@
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:gravity="fill"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -16,51 +17,70 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.054">
 
-        <LinearLayout
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar2"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.1"
-            android:orientation="horizontal">
+            android:background="@color/colorPrimary"
+            android:minHeight="?attr/actionBarSize"
+            android:theme="?attr/actionBarTheme"
+            app:contentInsetStart="0dp">
 
-            <Button
-                android:id="@+id/button"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Tomorrow"
-                tools:layout_editor_absoluteX="0dp"
-                tools:layout_editor_absoluteY="0dp" />
+                android:layout_height="match_parent"
+                android:layout_marginStart="0dp"
+                android:layout_marginLeft="0dp"
+                android:layout_marginRight="0dp"
+                android:layout_weight="0.1"
+                android:orientation="horizontal"
+                android:paddingLeft="0dp"
+                android:paddingRight="0dp">
 
-            <TextView
-                android:id="@+id/textView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="TextView"
-                android:textAlignment="center"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                tools:layout_editor_absoluteX="150dp"
-                tools:layout_editor_absoluteY="5dp"
-                tools:text="10/6/2018" />
+                <Button
+                    android:id="@+id/yesterday_button"
+                    style="@android:style/Widget.Material.Light.Button.Borderless.Small"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Yesterday"
+                    tools:layout_editor_absoluteX="0dp"
+                    tools:layout_editor_absoluteY="0dp" />
 
-            <Button
-                android:id="@+id/button2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Yersterday"
-                tools:layout_editor_absoluteX="88dp"
-                tools:layout_editor_absoluteY="0dp" />
+                <TextView
+                    android:id="@+id/current_date_text_view"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="TextView"
+                    android:textAlignment="center"
+                    android:textAppearance="@android:style/TextAppearance.Material.Title"
+                    android:textSize="18sp" />
 
-        </LinearLayout>
+                <Button
+                    android:id="@+id/tomorrow_button"
+                    style="@android:style/Widget.Material.Light.Button.Borderless.Small"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Tomorrow"
+                    android:textAlignment="center"
+                    tools:layout_editor_absoluteX="88dp"
+                    tools:layout_editor_absoluteY="0dp" />
+
+            </LinearLayout>
+
+        </android.support.v7.widget.Toolbar>
+
 
         <ImageView
             android:id="@+id/imageView3"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.2"
-            app:srcCompat="@drawable/testimg" />
+            android:scaleType="fitXY"
+            app:srcCompat="@drawable/rainbck" />
 
         <ListView
             android:id="@+id/list_todo"
@@ -73,7 +93,8 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.2"
-            app:srcCompat="@drawable/testimg" />
+            android:scaleType="centerCrop"
+            app:srcCompat="@drawable/rainbot" />
 
     </LinearLayout>
 

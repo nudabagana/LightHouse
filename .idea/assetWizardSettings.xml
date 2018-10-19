@@ -19,8 +19,23 @@
                                   <option name="values">
                                     <map>
                                       <entry key="assetType" value="IMAGE" />
-                                      <entry key="imageAsset" value="C:\Users\Matas\Desktop\testImg.png" />
+                                      <entry key="imageAsset" value="C:\Users\Matas\Desktop\rain2.png" />
+                                      <entry key="outputName" value="raining3" />
                                       <entry key="theme" value="CUSTOM" />
+                                    </map>
+                                  </option>
+                                </PersistentState>
+                              </value>
+                            </entry>
+                            <entry key="launcherLegacy">
+                              <value>
+                                <PersistentState>
+                                  <option name="values">
+                                    <map>
+                                      <entry key="assetType" value="IMAGE" />
+                                      <entry key="iconShape" value="NONE" />
+                                      <entry key="imageAsset" value="C:\Users\Matas\Desktop\rain2.png" />
+                                      <entry key="outputName" value="rain2noshape" />
                                     </map>
                                   </option>
                                 </PersistentState>

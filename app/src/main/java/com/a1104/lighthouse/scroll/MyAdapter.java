@@ -15,6 +15,7 @@ public class MyAdapter extends FragmentStatePagerAdapter {
     public MyAdapter(FragmentManager fragmentManager)
     {
         super(fragmentManager);
+
     }
     @Override
     public Fragment getItem(int position)
