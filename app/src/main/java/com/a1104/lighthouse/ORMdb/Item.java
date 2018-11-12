@@ -3,6 +3,7 @@ package com.a1104.lighthouse.ORMdb;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import java.util.Calendar;
 import java.util.Date;
 
 @DatabaseTable(tableName = "items")
@@ -24,10 +25,14 @@ public class Item {
 
     }
 
-    public Item(String text)
+    public Item(String text, Date date)
     {
+//        Calendar cal = Calendar.getInstance();
+//        cal.setTime(date);
+//        cal.add(Calendar.DATE, -1);
+//        this.doneDate = cal.getTime();
         this.done = false;
-        this.date = new Date();
+        this.date = date;
         this.description = "Empty";
         this.persistTillDone = false;
         this.progress = 0.0;

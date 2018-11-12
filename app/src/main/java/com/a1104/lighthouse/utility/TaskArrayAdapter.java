@@ -24,6 +24,7 @@ public class TaskArrayAdapter extends ArrayAdapter<Item> {
     List<Item> itemList = new ArrayList<>();
 
     private int idToFocus = 0;
+    private TextWatcherWithView textWather;
 
     public TaskArrayAdapter(@NonNull Context context, int resource) {
         super(context, resource);
@@ -31,6 +32,7 @@ public class TaskArrayAdapter extends ArrayAdapter<Item> {
     public TaskArrayAdapter(Context context, int resource, List<Item> items) {
         super(context, resource, items);
         itemList = items;
+        textWather = new TextWatcherWithView((MainActivity)this.getContext(),null);
     }
 
     @Override
@@ -42,7 +44,7 @@ public class TaskArrayAdapter extends ArrayAdapter<Item> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View v = convertView;
-        if ( v == null)
+//        if ( v == null)
         {
             LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             v = inflater.inflate(R.layout.item_todo, null);
@@ -50,24 +52,33 @@ public class TaskArrayAdapter extends ArrayAdapter<Item> {
         TextView IdView = v.findViewById(R.id.task_id);
         EditText textView = v.findViewById(R.id.task_title);
         CheckBox doneBox = v.findViewById(R.id.task_done);
-        doneBox.setOnCheckedChangeListener((CompoundButton.OnCheckedChangeListener) this.getContext());
+
 
         Item item = itemList.get(position);
         IdView.setText(String.valueOf(item.getId()));
         textView.setText(item.getText());
         doneBox.setChecked(item.getDone());
+        doneBox.setOnCheckedChangeListener((CompoundButton.OnCheckedChangeListener) this.getContext());
 
         if( idToFocus > 0 && item.getId() == idToFocus)
         {
-            idToFocus = 0;
-            textView.requestFocus();
-            textView.setSelection(textView.getText().length());
+//            idToFocus = 0;
+//            textView.requestFocus();
+//            textView.setSelection(textView.getText().length());
         }
 
-        if (item.getId() < 1)
-        {
-            textView.addTextChangedListener(new TextWatcherWithView((View)doneBox.getParent(),(MainActivity)this.getContext(), textView));
-        }
+//        if (item.getId() < 1)
+//        {
+//            // textView.removeTextChangedListener(); << maybe reduce bugs
+//            textWather.setListeningTo(textView);
+//            textView.addTextChangedListener(textWather);
+//        }
+//        else
+//        {
+//            textView.removeTextChangedListener(textWather);
+//        }
+
+        textView.setOnFocusChangeListener(new OnFocusChangeListenerWithActivity((MainActivity)this.getContext()));
         return v;
     }
 

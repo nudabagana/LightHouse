@@ -10,12 +10,24 @@ import android.transition.Explode;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.CalendarView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.a1104.lighthouse.EditTaskActivity;
+import com.a1104.lighthouse.MainActivity;
+import com.a1104.lighthouse.ORMdb.Item;
+import com.a1104.lighthouse.ORMdb.ORMdbHelper;
 import com.a1104.lighthouse.R;
+import com.j256.ormlite.dao.Dao;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -30,13 +42,18 @@ public class CalendarScreenFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    public static final String AGE = "com.a1104.lighthouse.Fragments.Age";
+    public static final String TASK_ID = "com.a1104.lighthouse.Fragments.TaskId";
 
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private Dao<Item, Integer> itemDao = null;
+    private ORMdbHelper dbHelper;
+    private ListView mTaskListView;
+    private ArrayAdapter<String> mAdapter;
 
     private OnFragmentInteractionListener mListener;
+
 
     public CalendarScreenFragment() {
         // Required empty public constructor
@@ -78,17 +95,29 @@ public class CalendarScreenFragment extends Fragment {
             @Override
             public void onSelectedDayChange(CalendarView view, int year, int month,
                                             int dayOfMonth) {
-                Toast.makeText(getActivity(), ""+dayOfMonth, Toast.LENGTH_SHORT).show();// TODO Auto-generated method stub
-                Intent myIntent = new Intent(getActivity(), EditTaskActivity.class);
-                myIntent.putExtra(AGE,17);
+//                Toast.makeText(getActivity(), ""+dayOfMonth, Toast.LENGTH_SHORT).show();// TODO Auto-generated method stub
+//                Intent myIntent = new Intent(getActivity(), EditTaskActivity.class);
+//                myIntent.putExtra(AGE,17);
+//
+//                Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle();
+//
+//                startActivity(myIntent,bundle);
 
-                Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle();
-
-                startActivity(myIntent,bundle);
+                ((MainActivity)getActivity()).GoToChosenDate(dayOfMonth, month, year);
 
                 //getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             }
         });
+
+        mTaskListView = view.findViewById(R.id.list_all_items);
+
+        dbHelper = new ORMdbHelper(getContext());
+        try {
+            itemDao = dbHelper.getDao();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        updateUIORM();
         return view;
     }
 
@@ -104,6 +133,7 @@ public class CalendarScreenFragment extends Fragment {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
+            ((MainActivity)context).SetCalendarFragment(this);
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
@@ -114,6 +144,58 @@ public class CalendarScreenFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    public void updateUIORM() {
+        if (itemDao == null)
+        {
+            return;
+        }
+        ArrayList<String> taskList = new ArrayList<>();
+
+        List<Item> itemList = getItems();
+            for (Item item: itemList)
+            {
+                taskList.add(item.getText());
+            }
+
+        if (mAdapter == null) {
+            mAdapter = new ArrayAdapter<>(getContext(),
+                    R.layout.item_todo_calendar,
+                    R.id.task_title_calendar,
+                    taskList);
+            mTaskListView.setAdapter(mAdapter);
+        } else {
+            mAdapter.clear();
+            mAdapter.addAll(taskList);
+            mAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private List<Item> getItems()
+    {
+        Date today = new Date();
+        Calendar c = Calendar.getInstance();
+        c.setTime(today);
+        // set the calendar to start of today
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+
+        today = c.getTime();
+
+        List<Item> todaysItems = new ArrayList<>();
+        try {
+            todaysItems = itemDao.queryBuilder().orderBy(Item.FIELD_NAME_DATE, true)
+                    .where().ge(Item.FIELD_NAME_DATE,today)
+                    .and()
+                    .eq(Item.FIELD_NAME_DONE,false).query();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return todaysItems;
     }
 
 }

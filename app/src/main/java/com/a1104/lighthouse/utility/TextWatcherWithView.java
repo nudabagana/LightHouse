@@ -8,13 +8,12 @@ import android.widget.EditText;
 import com.a1104.lighthouse.MainActivity;
 
 public class TextWatcherWithView implements TextWatcher {
-    private View view;
+
     private MainActivity mainActivity;
     private EditText listeningTo;
 
-    public TextWatcherWithView(View view, MainActivity mainActivity, EditText listeningTo)
+    public TextWatcherWithView( MainActivity mainActivity, EditText listeningTo)
     {
-        this.view = view;
         this.mainActivity = mainActivity;
         this.listeningTo = listeningTo;
     }
@@ -30,8 +29,14 @@ public class TextWatcherWithView implements TextWatcher {
 
     @Override
     public void afterTextChanged(Editable s) {
-        this.mainActivity.SaveItemToDB(this.view);
-        listeningTo.removeTextChangedListener(this);
+        if (s.toString().length() == 1)
+        {
+            this.mainActivity.SaveItemToDB(this.listeningTo);
+            listeningTo.removeTextChangedListener(this);
+        }
     }
 
+    public void setListeningTo(EditText listeningTo) {
+        this.listeningTo = listeningTo;
+    }
 }

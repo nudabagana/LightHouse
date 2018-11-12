@@ -1,62 +1,65 @@
 package com.a1104.lighthouse;
 
+import android.Manifest;
 import android.app.ActivityOptions;
-import android.app.AlertDialog;
-import android.content.ContentValues;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.transition.Explode;
-import android.transition.Fade;
-import android.transition.Slide;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
-import android.widget.ArrayAdapter;
-import android.widget.CalendarView;
 import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.a1104.lighthouse.Fragments.CalendarScreenFragment;
 import com.a1104.lighthouse.Fragments.OnFragmentInteractionListener;
 import com.a1104.lighthouse.Fragments.TaskScreenFragment;
 import com.a1104.lighthouse.Fragments.WeatherScreenFragment;
-import com.a1104.lighthouse.db.TaskContract;
 import com.a1104.lighthouse.db.TaskDbHelper;
 import com.a1104.lighthouse.scroll.MyAdapter;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
-import static com.a1104.lighthouse.Fragments.CalendarScreenFragment.AGE;
+import static com.a1104.lighthouse.Fragments.CalendarScreenFragment.TASK_ID;
 
 public class MainActivity extends AppCompatActivity implements OnFragmentInteractionListener, PopupMenu.OnMenuItemClickListener,
-        CompoundButton.OnCheckedChangeListener {
+        CompoundButton.OnCheckedChangeListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private MyAdapter myAdapter;
     private ViewPager viewPager;
 
     private TaskDbHelper mHelper;
-//    private ListView mTaskListView;
+    //    private ListView mTaskListView;
 //    private ArrayAdapter<String> mAdapter;
     private View currentMenuView;
+    private GoogleApiClient googleApiClient;
+
+    private String cityName = "";
+    private String countryName = "";
+
+    private WeatherScreenFragment weatherFragment;
+    private CalendarScreenFragment calendarFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,12 +87,107 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
         viewPager = findViewById(R.id.pagerContainer);
         viewPager.setAdapter(myAdapter);
         viewPager.setCurrentItem(1);
+
+
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+
     }
 
     private void setupWindowAnimations() {
         Explode explode = new Explode();
         //slide.setDuration(1000);
         getWindow().setExitTransition(explode);
+    }
+
+    public void SetWeatherFragment(WeatherScreenFragment fragment)
+    {
+        this.weatherFragment = fragment;
+    }
+
+    public void SetCalendarFragment(CalendarScreenFragment fragment)
+    {
+        this.calendarFragment = fragment;
+    }
+
+    public void RefreshCalendarFragment()
+    {
+        if (this.calendarFragment != null)
+        {
+            this.calendarFragment.updateUIORM();
+        }
+    }
+
+
+    @Override
+    protected void onStart() {
+// connect googleapiclient
+        googleApiClient.connect();
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+// disconnect googleapiclient
+        googleApiClient.disconnect();
+        super.onStop();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},
+                    1);
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+        }
+        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+        if (mLastLocation != null) {
+            // here we go you can see current lat long.
+            Log.e(TAG, "onConnected: " + String.valueOf(mLastLocation.getLatitude()) + ":" + String.valueOf(mLastLocation.getLongitude()));
+            Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
+            List<Address> addresses;
+            try {
+                addresses = gcd.getFromLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 1);
+                if (addresses != null) {
+                    if (addresses.size() > 0) {
+                        this.cityName = addresses.get(0).getLocality();
+                        this.countryName = addresses.get(0).getCountryName();
+                        ((TaskScreenFragment)getVisibleFragment()).SetLocationInfo(this.cityName, this.countryName);
+                        this.weatherFragment.SetLocationInfo(this.cityName, this.countryName);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public String GetCityName()
+    {
+        return this.cityName;
     }
 
 //    @Override
@@ -135,8 +233,13 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
     public boolean onMenuItemClick(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_edit_item:
+
+                View parent = (View) this.currentMenuView.getParent();
+                TextView taskTextView = parent.findViewById(R.id.task_id);
+                int taskId = Integer.parseInt(String.valueOf(taskTextView.getText()));
+
                 Intent myIntent = new Intent(this, EditTaskActivity.class);
-                myIntent.putExtra(AGE,17);
+                myIntent.putExtra(TASK_ID,taskId);
 
                 Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(this).toBundle();
 
@@ -227,4 +330,17 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
     {
         ((TaskScreenFragment)getVisibleFragment()).saveNewTaskORM(view);
     }
+
+    public void UpdateItemInDB(View view)
+    {
+        ((TaskScreenFragment)getVisibleFragment()).updateTaskORM(view);
+    }
+
+
+    public void GoToChosenDate(int day, int month, int year)
+    {
+        viewPager.setCurrentItem(1);
+        ((TaskScreenFragment)getVisibleFragment()).SetCurrentDate(day, month, year);
+    }
+
 }

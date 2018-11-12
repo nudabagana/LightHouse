@@ -23,15 +23,15 @@
             android:layout_weight="0.65" />
 
         <TextView
-            android:id="@+id/textView3"
+            android:id="@+id/text88"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.05"
-            android:text="TextView"
-            android:textAlignment="center"
-            tools:text="Future Tasks" />
+            android:text="Future Tasks"
+            android:textAlignment="center" />
 
         <ListView
+            android:id="@+id/list_all_items"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.4" />

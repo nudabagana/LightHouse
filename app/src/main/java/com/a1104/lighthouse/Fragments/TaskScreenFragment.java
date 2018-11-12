@@ -14,16 +14,22 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.a1104.lighthouse.MainActivity;
 import com.a1104.lighthouse.ORMdb.Item;
 import com.a1104.lighthouse.ORMdb.ORMdbHelper;
 import com.a1104.lighthouse.R;
+import com.a1104.lighthouse.Weather.WeatherInfo;
 import com.a1104.lighthouse.db.TaskContract;
 import com.a1104.lighthouse.db.TaskDbHelper;
 import com.a1104.lighthouse.utility.TaskArrayAdapter;
 import com.j256.ormlite.dao.Dao;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -67,6 +73,7 @@ public class TaskScreenFragment extends Fragment {
     private TaskArrayAdapter taskArrayAdapter;
 
     private TextView dateSelected;
+    private Date currentDate;
 
     public TaskScreenFragment() {
         // Required empty public constructor
@@ -112,6 +119,7 @@ public class TaskScreenFragment extends Fragment {
         df = new SimpleDateFormat(dateFormat);
         String formattedDate = df.format(c);
         dateSelected.setText(formattedDate);
+        this.currentDate = new Date();
 
         Button tomorrowButton = view.findViewById(R.id.tomorrow_button);
         tomorrowButton.setOnClickListener(new View.OnClickListener() {
@@ -122,6 +130,14 @@ public class TaskScreenFragment extends Fragment {
                     c.setTime(df.parse(dateSelected.getText().toString()));
                     c.add(Calendar.DATE, 1);  // number of days to add
                     dateSelected.setText(df.format(c.getTime()));  // dt is now the new date
+                    c.set(Calendar.MINUTE,10);
+                    currentDate = c.getTime();
+                    try {
+                        itemDao.delete(itemDao.queryBuilder().where().eq(Item.FIELD_NAME_TEXT, "").query());
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    updateUIORM();
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
@@ -137,6 +153,14 @@ public class TaskScreenFragment extends Fragment {
                     c.setTime(df.parse(dateSelected.getText().toString()));
                     c.add(Calendar.DATE, -1);  // number of days to add
                     dateSelected.setText(df.format(c.getTime()));  // dt is now the new date
+                    c.set(Calendar.MINUTE,10);
+                    currentDate = c.getTime();
+                    try {
+                        itemDao.delete(itemDao.queryBuilder().where().eq(Item.FIELD_NAME_TEXT, "").query());
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    updateUIORM();
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
@@ -148,15 +172,11 @@ public class TaskScreenFragment extends Fragment {
         dbHelper = new ORMdbHelper(getContext());
         try {
             itemDao = dbHelper.getDao();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        try {
             itemDao.delete(itemDao.queryBuilder().where().eq(Item.FIELD_NAME_TEXT, "").query());
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         //registerForContextMenu(mTaskListView);
 
         //CreateItem("randomText");
@@ -197,25 +217,27 @@ public class TaskScreenFragment extends Fragment {
 
     private void updateUIORM() {
         ArrayList<Item> taskList = new ArrayList<>();
-        taskList.addAll(getItemForDate(new Date()));
-        taskList.add(new Item(""));
+        taskList.addAll(getItemForDate(this.currentDate));
 
         if (taskArrayAdapter == null) {
             taskArrayAdapter = new TaskArrayAdapter(getContext(),
                     R.layout.item_todo,
                     taskList);
+            taskArrayAdapter.add(new Item("",this.currentDate));
             mTaskListView.setAdapter(taskArrayAdapter);
         } else {
             taskArrayAdapter.clear();
             taskArrayAdapter.addAll(taskList);
+            taskArrayAdapter.add(new Item("", this.currentDate));
             taskArrayAdapter.notifyDataSetChanged();
         }
+       // ((MainActivity)getContext()).RefreshCalendarFragment();
     }
 
     private List<Item> getItemForDate(Date date)
     {
         Calendar c = Calendar.getInstance();
-
+        c.setTime(date);
         // set the calendar to start of today
         c.set(Calendar.HOUR_OF_DAY, 0);
         c.set(Calendar.MINUTE, 0);
@@ -231,18 +253,36 @@ public class TaskScreenFragment extends Fragment {
             todaysItems = itemDao.queryBuilder()
                     .where()
                     .between(Item.FIELD_NAME_DATE,today, tomorrow)
+                    .and()
+                    .eq(Item.FIELD_NAME_REPEAT,false)
                     .query();
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
         try {
-            todaysItems.addAll(itemDao.queryBuilder()
+            List<Item> persistItems = itemDao.queryBuilder()
             .where()
             .eq(Item.FIELD_NAME_PERSIST_TIL_DONE,true)
             .and()
             .eq(Item.FIELD_NAME_DONE, false)
-            .query());
+            .query();
+            for (Item item: persistItems)
+            {
+                boolean alreadyIn = false;
+                for (Item i :todaysItems) {
+                    if (i.getId() == item.getId())
+                    {
+                        alreadyIn = true;
+                    }
+                }
+                if (!alreadyIn)
+                {
+                    item.setDone(false);
+                    todaysItems.add(item);
+                }
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -256,8 +296,18 @@ public class TaskScreenFragment extends Fragment {
             {
                 if (item.getDoneDate() == null || item.getDoneDate().before(today))
                 {
-                    item.setDone(false);
-                    todaysItems.add(item);
+                    boolean alreadyIn = false;
+                    for (Item i :todaysItems) {
+                        if (i.getId() == item.getId())
+                        {
+                            alreadyIn = true;
+                        }
+                    }
+                    if (!alreadyIn)
+                    {
+                        item.setDone(false);
+                        todaysItems.add(item);
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -363,7 +413,11 @@ public class TaskScreenFragment extends Fragment {
                 item.setDone(isDone);
                 if (isDone)
                 {
-                    item.setDoneDate(new Date());
+                    item.setDoneDate(this.currentDate);
+                    if (item.getPersistTillDone())
+                    {
+                        item.setDate(this.currentDate);
+                    }
                 }
                 itemDao.update(item);
             }
@@ -379,21 +433,49 @@ public class TaskScreenFragment extends Fragment {
         EditText taskTextView = parent.findViewById(R.id.task_title);
         String tasktitle = String.valueOf(taskTextView.getText());
 
-        Item item = new Item(tasktitle);
-        CheckBox doneBox = parent.findViewById(R.id.task_done);
-        item.setDone(doneBox.isChecked());
-        if (doneBox.isChecked())
-        {
-            item.setDoneDate(new Date());
+
+        TextView TextView = parent.findViewById(R.id.task_id);
+        int taskId = Integer.parseInt(String.valueOf(TextView.getText()));
+        if  (taskId == 0) {
+
+
+            Item item = new Item(tasktitle, this.currentDate);
+            CheckBox doneBox = parent.findViewById(R.id.task_done);
+            item.setDone(doneBox.isChecked());
+            if (doneBox.isChecked()) {
+                item.setDoneDate(this.currentDate);
+            }
+            try {
+                itemDao.create(item);
+                taskArrayAdapter.setIdToFocus(item.getId());
+                updateUIORM();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
+    }
+
+    public void updateTaskORM(View view) {
+        View parent = (View) view.getParent();
+        TextView taskTextView = parent.findViewById(R.id.task_id);
+        int taskId = Integer.parseInt(String.valueOf(taskTextView.getText()));
+        EditText editTextView = parent.findViewById(R.id.task_title);
+        String tasktitle = String.valueOf(editTextView.getText());
+
         try {
-            itemDao.create(item);
-            taskArrayAdapter.setIdToFocus(item.getId());
-            updateUIORM();
+            Item item = itemDao.queryForId(taskId);
+            if (item!= null)
+            {
+                item.setText(tasktitle);
+                itemDao.update(item);
+            }
+            else
+            {
+                saveNewTaskORM(view);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
     }
 
     private void setFocusToTextViewWithId(int id)
@@ -413,5 +495,62 @@ public class TaskScreenFragment extends Fragment {
         }
     }
 
+    public void SetWeather(JSONObject object)
+    {
+        int temp = 17; // << set temp
+        try {
+            double temperature = object.getJSONObject("main").getDouble("temp");
+            temp = (int)temperature;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        TextView textViewTemp = getView().findViewById(R.id.weatherTemperature);
 
+        textViewTemp.setText(Integer.toString(temp) + " °C");
+        ImageView imgView = getView().findViewById(R.id.weatherImage);
+        try {
+            String sky = object.getJSONArray("weather").getJSONObject(0).getString("main");
+            if (sky.equals("Clear") )
+            {
+                imgView.setImageResource(R.drawable.ic_wb_sunny);
+            }
+            else if (sky.equals("Rain"))
+            {
+                imgView.setImageResource(R.drawable.ic_icons8_rain_50);
+            }
+            else
+            {
+                imgView.setImageResource(R.drawable.ic_cloud);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    public void SetLocationInfo(String city, String country)
+    {
+        WeatherInfo.getInstance(getContext()).makeRequest(city,this);
+        TextView textViewLoc = getView().findViewById(R.id.locationTextView);
+        textViewLoc.setText(city + ", " + country);
+    }
+
+    public void SetCurrentDate(int day, int month, int year)
+    {
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.DATE, day);
+        c.set(Calendar.MONTH, month);
+        c.set(Calendar.YEAR, year);
+        dateSelected.setText(df.format(c.getTime()));  // dt is now the new date
+        c.set(Calendar.MINUTE,10);
+        currentDate = c.getTime();
+        updateUIORM();
+    }
+
+    @Override
+    public void onResume() {
+        updateUIORM();
+        super.onResume();
+    }
 }
