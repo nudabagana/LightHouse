@@ -279,7 +279,7 @@ public class TaskScreenFragment extends Fragment {
                 if (!alreadyIn)
                 {
                     item.setDone(false);
-                    todaysItems.add(item);
+                    todaysItems.add(0,item);
                 }
             }
 
@@ -306,7 +306,7 @@ public class TaskScreenFragment extends Fragment {
                     if (!alreadyIn)
                     {
                         item.setDone(false);
-                        todaysItems.add(item);
+                        todaysItems.add(0,item);
                     }
                 }
             }

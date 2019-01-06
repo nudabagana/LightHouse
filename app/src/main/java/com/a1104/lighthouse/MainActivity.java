@@ -175,11 +175,16 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
                     if (addresses.size() > 0) {
                         this.cityName = addresses.get(0).getLocality();
                         this.countryName = addresses.get(0).getCountryName();
-                        ((TaskScreenFragment)getVisibleFragment()).SetLocationInfo(this.cityName, this.countryName);
+                        try {
+                            ((TaskScreenFragment)getVisibleFragment()).SetLocationInfo(this.cityName, this.countryName);
+                        }
+                        catch (Exception e) {
+
+                        }
                         this.weatherFragment.SetLocationInfo(this.cityName, this.countryName);
                     }
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

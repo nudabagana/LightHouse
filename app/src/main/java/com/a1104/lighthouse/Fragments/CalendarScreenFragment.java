@@ -191,6 +191,29 @@ public class CalendarScreenFragment extends Fragment {
                     .where().ge(Item.FIELD_NAME_DATE,today)
                     .and()
                     .eq(Item.FIELD_NAME_DONE,false).query();
+
+            List<Item> repeatableItems = itemDao.queryBuilder()
+                    .where()
+                    .eq(Item.FIELD_NAME_REPEAT, true)
+                    .query();
+            for (Item item: repeatableItems)
+            {
+                if (item.getDoneDate() == null || item.getDoneDate().before(today))
+                {
+                    boolean alreadyIn = false;
+                    for (Item i :todaysItems) {
+                        if (i.getId() == item.getId())
+                        {
+                            alreadyIn = true;
+                        }
+                    }
+                    if (!alreadyIn)
+                    {
+                        item.setDone(false);
+                        todaysItems.add(item);
+                    }
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
